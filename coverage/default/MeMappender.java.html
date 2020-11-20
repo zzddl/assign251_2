@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MeMappender.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">assign251_2$All_in_assign251_2.exec</a> &gt; <a href="index.source.html" class="el_package">default</a> &gt; <span class="el_source">MeMappender.java</span></div><h1>MeMappender.java</h1><pre class="source lang-java linenums">import org.apache.log4j.AppenderSkeleton;
+import org.apache.log4j.Layout;
+import org.apache.log4j.spi.LoggingEvent;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+
+/**
+ * @Description
+ * @Author Dinglong Zhang
+ * @Date 2020-11-01 15:02
+ */
+public class MeMappender extends AppenderSkeleton {
+    private static MeMappender instance;
+<span class="fc" id="L16">    private int maxsize=101;</span>
+<span class="fc" id="L17">    private long discardedLogCount = 0;</span>
+
+    private static List&lt;LoggingEvent&gt; currentloggingEventList;
+    private Layout layout;
+
+
+    //单例设计模式
+<span class="fc" id="L24">    private MeMappender(List&lt;LoggingEvent&gt; list) {</span>
+<span class="fc" id="L25">        MeMappender.currentloggingEventList = list;</span>
+<span class="fc" id="L26">        instance = this;</span>
+<span class="fc" id="L27">    }</span>
+
+    public static synchronized MeMappender getInstance(List&lt;LoggingEvent&gt; list) {
+<span class="fc bfc" id="L30" title="All 2 branches covered.">        if (instance == null) {</span>
+<span class="fc" id="L31">            instance = new MeMappender(list);</span>
+
+        }
+<span class="fc" id="L34">        return instance;</span>
+    }
+
+
+
+
+    @Override
+    protected void append(LoggingEvent loggingEvent) {
+<span class="fc" id="L42">        currentloggingEventList.add(loggingEvent);</span>
+
+<span class="fc bfc" id="L44" title="All 2 branches covered.">        if (currentloggingEventList.size() &gt;= maxsize) {</span>
+<span class="fc" id="L45">            discardedLogCount++;</span>
+<span class="fc" id="L46">            currentloggingEventList.remove(0);</span>
+        }
+
+<span class="fc" id="L49">    }</span>
+
+    //getcurrentlogs
+    public List&lt;LoggingEvent&gt; getCurrentLogs() {
+<span class="fc" id="L53">        return Collections.unmodifiableList(currentloggingEventList);</span>
+    }
+
+    public List&lt;String&gt; getEventStrings() {
+
+<span class="fc" id="L58">        List&lt;String&gt; eventstrings = getCurrentLogs()</span>
+<span class="fc" id="L59">                .stream()</span>
+<span class="fc" id="L60">                .map(loggingEvent -&gt; this.layout.format(loggingEvent))</span>
+<span class="fc" id="L61">                .collect(Collectors.toList());</span>
+<span class="fc" id="L62">        return Collections.unmodifiableList(eventstrings);</span>
+    }
+
+    public void printlogs() {
+<span class="fc" id="L66">        List&lt;String&gt; eventstrings = getEventStrings();</span>
+<span class="fc bfc" id="L67" title="All 2 branches covered.">        for (String event:eventstrings) {</span>
+<span class="fc" id="L68">            System.out.println(event);</span>
+<span class="fc" id="L69">        }</span>
+<span class="fc" id="L70">        currentloggingEventList.clear();</span>
+
+<span class="fc" id="L72">    }</span>
+
+
+    @Override
+    public void close() {
+        //释放资源
+<span class="fc" id="L78">        discardedLogCount = 0;</span>
+<span class="fc" id="L79">        currentloggingEventList = null;</span>
+<span class="fc" id="L80">        layout = null;</span>
+<span class="fc" id="L81">        instance = null;</span>
+<span class="fc" id="L82">    }</span>
+
+    @Override
+    public boolean requiresLayout() {
+        //是否需要按格式输出文本
+<span class="nc" id="L87">        return false;</span>
+    }
+
+
+
+    @Override
+    public Layout getLayout() {
+<span class="fc" id="L94">        return layout;</span>
+    }
+
+    @Override
+    public void setLayout(Layout layout) {
+<span class="fc" id="L99">        this.layout = layout;</span>
+<span class="fc" id="L100">    }</span>
+
+    public long getDiscardedLogCount() {
+<span class="fc" id="L103">        return discardedLogCount;</span>
+    }
+
+    public void setDiscardedLogCount(long discardedLogCount) {
+<span class="nc" id="L107">        this.discardedLogCount = discardedLogCount;</span>
+<span class="nc" id="L108">    }</span>
+
+    public int getMaxsize() {
+<span class="nc" id="L111">        return maxsize;</span>
+    }
+
+    public void setMaxsize(int maxsize) {
+<span class="fc" id="L115">        this.maxsize = maxsize;</span>
+<span class="fc" id="L116">    }</span>
+
+    public List&lt;LoggingEvent&gt; getCurrentloggingEventList() {
+<span class="nc" id="L119">        return currentloggingEventList;</span>
+    }
+
+    public static void setCurrentloggingEventList(List&lt;LoggingEvent&gt; currentloggingEventList) {
+<span class="nc" id="L123">        MeMappender.currentloggingEventList = currentloggingEventList;</span>
+<span class="nc" id="L124">    }</span>
+    /**
+     * 定义 setter 方法，这样在配置文件中添加类似 log4j.appender.CustomAppender.appName=test_app_name 的配置项时，配置会被注入到这个 appender 中
+     */
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>
